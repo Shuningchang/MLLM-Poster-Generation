@@ -16,23 +16,11 @@ from google.colab import files
 # 依序上傳：generated_images.zip, ref.zip, product.zip, prompts.json, pairs.csv
 uploaded = files.upload()
 
-
-from google.colab import files
+uploaded = files.upload()
 
 uploaded = files.upload()
 
-
-from google.colab import files
-
 uploaded = files.upload()
-
-
-from google.colab import files
-
-uploaded = files.upload()
-
-
-from google.colab import files
 
 uploaded = files.upload()
 
