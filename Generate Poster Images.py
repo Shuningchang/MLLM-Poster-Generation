@@ -7,40 +7,40 @@ Original file is located at
     https://colab.research.google.com/drive/14VrEymRhgeCGZReATpzmZdc7Syf6N0k6
 """
 
-#檢查硬體加速器選擇GPU
+# GPU
 import torch
 print(torch.cuda.is_available())
 print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU")
 
-#上傳檔案到colab
+# Upload files
 from google.colab import files
 uploaded = files.upload()
 
-#解壓縮
+# Extract zip file
 import zipfile
 import os
 
 zip_path = "ai_hw1_colab.zip"
-#解壓縮位置
+# Extraction directory
 extract_dir = "/content/ai_hw1_colab"
 
 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
     zip_ref.extractall(extract_dir)
 
-print("解壓完成")
+print("Extraction completed")
 print(os.listdir(extract_dir))
 
-#檢查
+# Check files
 base_dir = "/content/ai_hw1_colab/ai_hw1_colab"
 print("pairs.csv exists:", os.path.exists(os.path.join(base_dir, "pairs.csv")))
 print("prompts.json exists:", os.path.exists(os.path.join(base_dir, "prompts.json")))
 print("product exists:", os.path.exists(os.path.join(base_dir, "product")))
 print("ref exists:", os.path.exists(os.path.join(base_dir, "ref")))
 
-#安裝套件
+
 !pip install diffusers==0.24.0 transformers==4.37.0 accelerate==0.26.0 safetensors -q
 
-#確認資料對應
+# Verify data mapping
 import os
 import json
 import pandas as pd
@@ -56,16 +56,16 @@ df = pd.read_csv(pairs_path)
 with open(prompts_path, "r", encoding="utf-8") as f:
     prompts_data = json.load(f)
 
-print("pairs.csv 筆數:", len(df))
-print("prompts.json 筆數:", len(prompts_data))
+print("Number of rows in pairs.csv:", len(df))
+print("Number of entries in prompts.json:", len(prompts_data))
 print(df.head(3))
 print(prompts_data[:2])
 
-#把 prompt 轉成查詢表(建立prompt_map)
+# Convert prompts into a lookup table (build prompt_map)
 prompt_map = {item["pair_id"]: item["generated_prompt"] for item in prompts_data}
 print(list(prompt_map.items())[:2])
 
-# 載入 SD1.5 和 IP-Adapter
+# Load SD1.5 and IP-Adapter
 import torch
 from diffusers import StableDiffusionPipeline
 from PIL import Image
@@ -88,9 +88,9 @@ pipe.set_ip_adapter_scale(0.6)
 pipe.enable_attention_slicing()
 
 print(f"diffusers version: {__import__('diffusers').__version__}")
-print("載入完成")
+print("Model loading completed")
 
-# 測一張(T2I pipeline是否有通)
+# Test one image (check whether the T2I pipeline works)
 from PIL import Image
 import os
 
@@ -107,7 +107,7 @@ generator = torch.Generator(device="cuda").manual_seed(42)
 
 result = pipe(
     prompt=prompt,
-    ip_adapter_image=product_image,  # ← 改成 product_image，不是 ref_image
+    ip_adapter_image=product_image,  
     negative_prompt="blurry, low quality, text, watermark",
     num_inference_steps=20,
     guidance_scale=6.5,
@@ -116,11 +116,11 @@ result = pipe(
 
 result
 
-# 多測幾張，調整參數
+# Test a few more images and tune parameters
 test_prompts = [
-    # 原本的 prompt
+    # Original prompt
     prompt_map["0001"],
-    # 加強 poster 風格的版本
+    # Enhanced poster-style version
     prompt_map["0001"] + ", advertisement poster layout, marketing design, product showcase",
 ]
 
@@ -136,13 +136,13 @@ for idx, test_prompt in enumerate(test_prompts):
             prompt=test_prompt,
             ip_adapter_image=product_image,
             negative_prompt="blurry, low quality, realistic photo, plain background, no text",
-            num_inference_steps=30,      # 從 20 提高到 30
-            guidance_scale=8.0,          # 從 6.5 提高到 8.0，更貼近 prompt
+            num_inference_steps=30,      # Increased from 20 to 30
+            guidance_scale=8.0,          # Increased from 6.5 to 8.0 for stronger prompt alignment
             generator=generator,
         ).images[0]
 
         display(result)
-        print(f"prompt版本={idx+1}, seed={seed}")
+        print(f"prompt version={idx+1}, seed={seed}")
 
 import os
 from PIL import Image
@@ -157,7 +157,7 @@ for i, row in df.iterrows():
     prompt = prompt_map.get(pair_id, "product advertisement poster, clean background, professional lighting, high quality, commercial photography")
 
     if not os.path.exists(product_path):
-        print(f"跳過 {pair_id}：找不到 product 圖片")
+        print(f"Skip {pair_id}: product image not found")
         continue
 
     try:
@@ -172,18 +172,18 @@ for i, row in df.iterrows():
             generator=torch.Generator(device="cuda").manual_seed(456),
         ).images[0]
 
-        # resize 到 224x224
+        # Resize to 224x224
         result = result.resize((224, 224), Image.LANCZOS)
         result.save(os.path.join(output_dir, f"{pair_id}.jpg"))
 
-        print(f"[{i+1}/100] {pair_id} 完成")
+        print(f"[{i+1}/100] {pair_id} completed")
 
     except Exception as e:
-        print(f"[{i+1}/100] {pair_id} 錯誤：{e}")
+        print(f"[{i+1}/100] {pair_id} error：{e}")
 
-print("\n全部完成！")
+print("\nAll done！")
 
-#下載打包
+# Download zipped output
 import shutil
 from google.colab import files
 
