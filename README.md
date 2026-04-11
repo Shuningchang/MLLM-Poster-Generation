@@ -7,9 +7,9 @@ Extract the color palette, layout, and overall design mood from the poster and u
 ### Local Environment (Prompt Generation)
 - **OS**: Windows 11
 - **Python**: 3.14
-- **CPU**: (your CPU model)
+- **CPU**: AMD Ryzen 5 5625U with Radeon Graphics
 - **GPU**: AMD Radeon Graphics (not used, inference runs on CPU)
-- **RAM**: (your RAM size)
+- **RAM**: 16 GB
 
 ### Cloud Environment (Image Generation & Metric Evaluation)
 - **Platform**: Google Colab
@@ -47,7 +47,7 @@ pip install git+https://github.com/openai/CLIP.git
 
 Please ensure the following structure before running:
 task1/
-├── MLLM.py              ← Prompt 生成主程式
+├── MLLM.py              
 ├── pairs.csv
 ├── product/
 │   ├── p001.png
@@ -110,4 +110,4 @@ Open `task1_metrics.ipynb` in Colab and run all cells in order. The following th
 task1_images/
 ├── 0001.jpg   (224×224)
 ├── 0002.jpg   (224×224)
-└── ...        (共 100 張)
+└── ...        (100 in total)
