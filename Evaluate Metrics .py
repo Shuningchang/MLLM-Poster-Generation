@@ -7,24 +7,20 @@ Original file is located at
     https://colab.research.google.com/drive/1MN5lxISzihjkRWVGHTpt9jirh2j-aqFc
 """
 
-# 1 - 安裝套件
+
 !pip install torchmetrics[multimodal] torch-fidelity transformers -q
 
-# 2 - 上傳檔案
+
 from google.colab import files
 
-# 依序上傳：generated_images.zip, ref.zip, product.zip, prompts.json, pairs.csv
+# Upload in order：generated_images.zip, ref.zip, product.zip, prompts.json, pairs.csv
+uploaded = files.upload()
+uploaded = files.upload()
+uploaded = files.upload()
+uploaded = files.upload()
 uploaded = files.upload()
 
-uploaded = files.upload()
-
-uploaded = files.upload()
-
-uploaded = files.upload()
-
-uploaded = files.upload()
-
-# 3 - 解壓縮
+# Unzip files
 import zipfile
 import os
 
@@ -37,11 +33,11 @@ with zipfile.ZipFile("ref.zip", 'r') as z:
 with zipfile.ZipFile("product.zip", 'r') as z:
     z.extractall("/content/product")
 
-print("generated:", len(os.listdir("/content/generated")), "張")
-print("ref:", len(os.listdir("/content/ref")), "張")
-print("product:", len(os.listdir("/content/product")), "張")
+print("generated:", len(os.listdir("/content/generated")), "images")
+print("ref:", len(os.listdir("/content/ref")), "images")
+print("product:", len(os.listdir("/content/product")), "images")
 
-# 4 - 讀取資料
+# Load data
 import json
 import pandas as pd
 
@@ -50,11 +46,11 @@ with open("prompts.json", "r", encoding="utf-8") as f:
 prompt_map = {item["pair_id"]: item["generated_prompt"] for item in prompts_data}
 
 df = pd.read_csv("pairs.csv")
-print("prompts:", len(prompt_map), "筆")
-print("pairs:", len(df), "筆")
+print("prompts:", len(prompt_map), "entries")
+print("pairs:", len(df), "entries")
 
-# 5 - CLIP-Score（generated poster vs editing prompt）
-# 參考：https://lightning.ai/docs/torchmetrics/stable/gallery/image/clip_score.html
+#  CLIP-Score（generated poster vs editing prompt）
+# Reference：https://lightning.ai/docs/torchmetrics/stable/gallery/image/clip_score.html
 
 import torch
 import numpy as np
@@ -97,19 +93,19 @@ for pair_id, prompt in prompt_map.items():
 
 print(f"CLIP-Score (generated vs prompt): {sum(scores_prompt)/len(scores_prompt):.4f}")
 
-# Debug - 檢查路徑
+# Debug - Check paths
 import os
 
-print("generated 資料夾內容（前5個）:")
+print("Contents of generated folder (first 5):")
 print(os.listdir("/content/generated")[:5])
 
-print("\nproduct 資料夾內容（前5個）:")
+print("\nContents of product folder (first 5):")
 print(os.listdir("/content/product")[:5])
 
-print("\ndf 的 product_image 欄位（前5個）:")
+print("\nFirst 5 values in the product_image column of df:")
 print(df["product_image"].head())
 
-# 測試第一筆路徑
+# Test the first path
 row = df.iloc[0]
 pair_id = str(row["pair_id"]).zfill(4)
 gen_path = f"/content/generated/{pair_id}.jpg"
@@ -118,8 +114,8 @@ prod_path = f"/content/product/{row['product_image']}"
 print(f"\ngen_path: {gen_path} → exists: {os.path.exists(gen_path)}")
 print(f"prod_path: {prod_path} → exists: {os.path.exists(prod_path)}")
 
-# 6 - CLIP visual similarity（generated poster vs product image）
-# 參考：https://colab.research.google.com/github/openai/clip/blob/master/notebooks/Interacting_with_CLIP.ipynb
+# CLIP visual similarity（generated poster vs product image）
+# Reference：https://colab.research.google.com/github/openai/clip/blob/master/notebooks/Interacting_with_CLIP.ipynb
 !pip install git+https://github.com/openai/CLIP.git -q
 
 import clip
@@ -159,13 +155,13 @@ for _, row in df.iterrows():
 
 print(f"CLIP visual similarity (generated vs product): {sum(cos_scores)/len(cos_scores):.4f}")
 
-# 7 - KID（generated vs ref）
-# 參考：https://github.com/toshas/torch-fidelity
+# KID（generated vs ref）
+# Reference：https://github.com/toshas/torch-fidelity
 
 import torch_fidelity
 from PIL import Image
 
-# ref 圖片 resize 成 224x224 存一份
+# Resize ref images to 224x224 and save a copy
 ref_resized_dir = "/content/ref_resized"
 os.makedirs(ref_resized_dir, exist_ok=True)
 
@@ -175,9 +171,9 @@ for fname in os.listdir(ref_dir):
         img = Image.open(os.path.join(ref_dir, fname)).convert("RGB").resize((224, 224))
         img.save(os.path.join(ref_resized_dir, fname))
 
-print(f"ref resized: {len(os.listdir(ref_resized_dir))} 張")
+print(f"ref resized: {len(os.listdir(ref_resized_dir))} images")
 
-# 計算 KID
+# Calculate KID
 metrics = torch_fidelity.calculate_metrics(
     input1="/content/generated",
     input2=ref_resized_dir,
@@ -191,12 +187,12 @@ metrics = torch_fidelity.calculate_metrics(
 
 print(f"\nKID mean: {metrics['kernel_inception_distance_mean']:.6f}")
 print(f"KID std:  {metrics['kernel_inception_distance_std']:.6f}")
-print("(越低越好)")
+print("(Lower is better)")
 
-# 8 - 總結
+# Summary
 print("=" * 40)
 print("Task 1 Metric Summary")
 print("=" * 40)
 print(f"CLIP-Score (vs prompt):   {sum(scores_prompt)/len(scores_prompt):.4f}")
 print(f"CLIP similarity (vs product): {sum(cos_scores)/len(cos_scores):.4f}")
-print(f"KID mean: {metrics['kernel_inception_distance_mean']:.6f} (越低越好)")
+print(f"KID mean: {metrics['kernel_inception_distance_mean']:.6f} (Lower is better)")
