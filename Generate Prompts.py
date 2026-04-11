@@ -150,7 +150,7 @@ def validate_csv_columns(df: pd.DataFrame):
     required_columns = ["pair_id", "product_image", "ref_image", "product_title"]
     for col in required_columns:
         if col not in df.columns:
-            raise ValueError(f"pairs.csv 缺少必要欄位：{col}")
+            raise ValueError(f"pairs.csv is missing a required column:{col}")
 
 
 def main():
@@ -162,7 +162,7 @@ def main():
     output_json = Path(args.output_json)
 
     if not csv_path.exists():
-        raise FileNotFoundError(f"找不到 CSV 檔案：{csv_path}")
+        raise FileNotFoundError(f"CSV file not found: {csv_path}")
 
     output_json.parent.mkdir(parents=True, exist_ok=True)
 
@@ -172,7 +172,7 @@ def main():
     if args.debug:
         df = df.head(args.debug_samples).reset_index(drop=True)
 
-    print(f"讀到 {len(df)} 筆資料")
+    print(f"Loaded {len(df)} entries")
 
     processor, model = load_model_and_processor(args.model_id)
 
@@ -187,11 +187,11 @@ def main():
         print(f"\n[{i + 1}/{len(df)}] pair_id={pair_id}")
 
         if not product_path.exists():
-            print(f"  跳過：找不到 {product_path}")
+            print(f" Skip: {product_path} not found")
             continue
 
         if not ref_path.exists():
-            print(f"  跳過：找不到 {ref_path}")
+            print(f"  Skip: {ref_path} not found")
             continue
 
         try:
@@ -208,12 +208,12 @@ def main():
                 "generated_prompt": prompt
             })
         except Exception as e:
-            print(f"  錯誤：{e}")
+            print(f"  Error：{e}")
 
     with open(output_json, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    print(f"\n完成！輸出 {output_json}，共 {len(results)} 筆")
+    print(f"\nDone! Output saved to {output_json}, total {len(results)} entries")
 
 
 if __name__ == "__main__":
